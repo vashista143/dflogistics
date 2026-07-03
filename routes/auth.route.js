@@ -6,7 +6,7 @@ const {
   loginUser,
   logoutUser,
   refreshAccessToken,
-} = require("../controllers/authController");
+} = require("../controllers/authcontroller");
 
 const authMiddleware = require("../middleware/middleware");
 
