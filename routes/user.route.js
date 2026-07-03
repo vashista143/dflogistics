@@ -4,7 +4,7 @@ const {
   getUserProfile,
   updateUserProfile,
   updateCurrentLocation,
-} = require("../controllers/userController");
+} = require("../controllers/usercontroller");
 
 const authMiddleware = require("../middleware/middleware");
 
