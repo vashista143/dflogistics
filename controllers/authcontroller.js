@@ -139,22 +139,21 @@ const loginUser = async (req, res) => {
             message: "Invalid email or password.",
         });
         }
+    
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
+    const userData = user.toObject();
+    delete userData.password;
+    delete userData.refreshToken;
     return res.status(200).json({
       success: true,
       message: "Login successful.",
       accessToken,
       refreshToken,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        mobileNumber: user.mobileNumber,
-      },
+      user: userData,
     });
   } catch (error) {
     console.error("Login Error:", error);
