@@ -119,6 +119,7 @@ const getJobById = async (req, res) => {
         job: jobId,
         applicant: userId,
       });
+    console.log("alreadyApplied:", alreadyApplied);
     res.status(200).json({
       success: true,
       message: "Job fetched successfully.",
