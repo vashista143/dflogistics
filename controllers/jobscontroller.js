@@ -108,11 +108,16 @@ const getJobById = async (req, res) => {
         message: "Job not found.",
       });
     }
-
+    const alreadyApplied =
+      await JobApplication.exists({
+        job: jobId,
+        applicant: userId,
+      });
     res.status(200).json({
       success: true,
       message: "Job fetched successfully.",
       data: job,
+        isApplied: !!alreadyApplied,
     });
   } catch (error) {
     console.error("Get Job Error:", error);
@@ -315,8 +320,7 @@ const updateJob = async (req, res) => {
 };
 
 const getPostedJobs = async (req, res) => {
-    console.log("Fetching posted jobs for user:", req.user.id);
-
+  console.log("Fetching posted jobs for user:", req.user.id);
   try {
     const userId = req.user.id;
 
@@ -324,7 +328,7 @@ const getPostedJobs = async (req, res) => {
       postedBy: userId,
     })
       .sort({ createdAt: -1 });
-      console.log(jobs)
+      console.log(jobs);
     return res.status(200).json({
       success: true,
       count: jobs.length,
