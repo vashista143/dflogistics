@@ -88,13 +88,8 @@ const getAllJobs = async (req, res) => {
 // ======================================
 const getJobById = async (req, res) => {
   try {
-    console.log("GET JOB BY ID HIT");
-
     const jobId = req.params.id;
-    const userId = req.user.id;
-
-    console.log("Job:", jobId);
-    console.log("User:", userId);
+        const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(jobId)) {
       return res.status(400).json({
@@ -119,13 +114,18 @@ const getJobById = async (req, res) => {
         job: jobId,
         applicant: userId,
       });
-    console.log("alreadyApplied:", alreadyApplied);
-    res.status(200).json({
-      success: true,
-      message: "Job fetched successfully.",
-      data: job,
-        isApplied: !!alreadyApplied,
-    });
+      console.log("alreadyApplied:", alreadyApplied);
+    
+    const isApplied = alreadyApplied !== null;
+
+res.status(200).json({
+  success: true,
+  message: "Job fetched successfully.",
+  data: {
+    ...job.toObject(),
+    isApplied,
+  },
+});
   } catch (error) {
     console.error("Get Job Error:", error);
 
