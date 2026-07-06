@@ -315,6 +315,8 @@ const updateJob = async (req, res) => {
 };
 
 const getPostedJobs = async (req, res) => {
+    console.log("Fetching posted jobs for user:", req.user.id);
+
   try {
     const userId = req.user.id;
 
