@@ -38,19 +38,6 @@ const jobSchema = new mongoose.Schema(
       },
     ],
 
-    jobType: {
-      type: String,
-      enum: [
-        "CDL_A",
-        "CDL_B",
-        "Local",
-        "Regional",
-        "OTR",
-        "Owner_Operator",
-      ],
-      required: true,
-    },
-
     employmentType: {
       type: String,
       enum: ["Full-Time", "Part-Time", "Contract"],
