@@ -338,6 +338,52 @@ const getPostedJobs = async (req, res) => {
   }
 };
 
+const getApplicants = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 15;
+
+    const skip = (page - 1) * limit;
+
+    const applications =
+      await JobApplication.find({
+        job: jobId,
+      })
+        .populate(
+          "applicant",
+          "name email mobileNumber location createdAt"
+        )
+        .skip(skip)
+        .limit(limit)
+        .sort({
+          createdAt: -1,
+        });
+
+    const total =
+      await JobApplication.countDocuments({
+        job: jobId,
+      });
+
+    res.json({
+      success: true,
+      data: applications,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 module.exports = {
   getAllJobs,
   getJobById,
@@ -346,4 +392,5 @@ module.exports = {
   applyForJob,
   getAppliedJobs,
   getPostedJobs,
+  getApplicants,
 };
