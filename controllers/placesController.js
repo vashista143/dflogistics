@@ -43,12 +43,29 @@ const getNearbyParking = async (req, res) => {
 
       return !isGarageDoorBusiness;
     });
+const formattedParking = parkingPlaces.map((place) => ({
+  id: place.id,
+  name: place.poi?.name || "Parking",
+  distanceInMeters: Math.round(place.dist),
+  distanceInKm: (place.dist / 1000).toFixed(2),
+  latitude: place.position?.lat,
+  longitude: place.position?.lon,
+  address: place.address?.freeformAddress,
+  city: place.address?.municipality,
+  state: place.address?.countrySubdivisionCode,
+  phone: place.poi?.phone || null,
+  website: place.poi?.url || null,
+  category: "Parking",
+  routingPoint:
+    place.entryPoints?.find((e) => e.preferredRouting)?.position ||
+    place.position,
+}));
 
-    return res.status(200).json({
-      success: true,
-      count: parkingPlaces.length,
-      data: parkingPlaces,
-    });
+return res.status(200).json({
+  success: true,
+  count: formattedParking.length,
+  data: formattedParking,
+});
   } catch (err) {
     console.error(err.response?.data || err);
 
