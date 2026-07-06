@@ -322,7 +322,7 @@ const getPostedJobs = async (req, res) => {
       postedBy: userId,
     })
       .sort({ createdAt: -1 });
-
+      console.log(jobs)
     return res.status(200).json({
       success: true,
       count: jobs.length,
