@@ -6,6 +6,10 @@ const {
   getJobById,
   applyForJob,
   getAppliedJobs,
+  createJob,
+  updateJob,
+  getPostedJobs,
+  getApplicants,
 } = require("../controllers/jobscontroller");
 
 const authMiddleware = require("../middleware/middleware");
@@ -27,5 +31,7 @@ router.post("/",  authMiddleware,  createJob);
 router.put(  "/:id",  authMiddleware,  updateJob);
 
 router.get(  "/my-posted",  authMiddleware,  getPostedJobs);
+
+router.get("/:id/applicants", authMiddleware, getApplicants);
 
 module.exports = router;
