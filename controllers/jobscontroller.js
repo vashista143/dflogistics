@@ -214,9 +214,136 @@ const getAppliedJobs = async (req, res) => {
   }
 };
 
+
+const createJob = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const {
+      title,
+      company,
+      companyLogo,
+      description,
+      requirements,
+      responsibilities,
+      employmentType,
+      experience,
+      location,
+      salary,
+      benefits,
+      openings,
+      applicationDeadline,
+    } = req.body;
+
+    const job = await Job.create({
+      title,
+      company,
+      companyLogo,
+      description,
+      requirements,
+      responsibilities,
+      employmentType,
+      experience,
+      location,
+      salary,
+      benefits,
+      openings,
+      applicationDeadline,
+      postedBy: userId,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Job created successfully.",
+      data: job,
+    });
+  } catch (error) {
+    console.error("Create Job Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+const updateJob = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const jobId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Job ID",
+      });
+    }
+
+    const job = await Job.findById(jobId);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found.",
+      });
+    }
+
+    if (job.postedBy.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to edit this job.",
+      });
+    }
+
+    Object.assign(job, req.body);
+
+    await job.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Job updated successfully.",
+      data: job,
+    });
+  } catch (error) {
+    console.error("Update Job Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+const getPostedJobs = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const jobs = await Job.find({
+      postedBy: userId,
+    })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: jobs.length,
+      data: jobs,
+    });
+  } catch (error) {
+    console.error("Posted Jobs Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 module.exports = {
   getAllJobs,
   getJobById,
+  createJob,
+  updateJob,
   applyForJob,
   getAppliedJobs,
+  getPostedJobs,
 };
