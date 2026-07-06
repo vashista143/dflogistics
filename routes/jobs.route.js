@@ -14,24 +14,20 @@ const {
 
 const authMiddleware = require("../middleware/middleware");
 
-// Get all available jobs
 router.get("/", authMiddleware, getAllJobs);
 
-// Get applied jobs
+router.post("/", authMiddleware, createJob);
+
 router.get("/applications", authMiddleware, getAppliedJobs);
 
-// Get a specific job
-router.get("/:id", authMiddleware, getJobById);
+router.get("/my-posted", authMiddleware, getPostedJobs);
 
-// Apply for a job
 router.post("/:id/apply", authMiddleware, applyForJob);
 
-router.post("/",  authMiddleware,  createJob);
-
-router.put(  "/:id",  authMiddleware,  updateJob);
-
-router.get(  "/my-posted",  authMiddleware,  getPostedJobs);
-
 router.get("/:id/applicants", authMiddleware, getApplicants);
+
+router.put("/:id", authMiddleware, updateJob);
+
+router.get("/:id", authMiddleware, getJobById);
 
 module.exports = router;
