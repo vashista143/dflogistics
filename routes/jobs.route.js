@@ -22,5 +22,10 @@ router.get("/:id", authMiddleware, getJobById);
 // Apply for a job
 router.post("/:id/apply", authMiddleware, applyForJob);
 
+router.post("/",  authMiddleware,  createJob);
+
+router.put(  "/:id",  authMiddleware,  updateJob);
+
+router.get(  "/my-posted",  authMiddleware,  getPostedJobs);
 
 module.exports = router;
