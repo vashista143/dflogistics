@@ -88,8 +88,13 @@ const getAllJobs = async (req, res) => {
 // ======================================
 const getJobById = async (req, res) => {
   try {
+    console.log("GET JOB BY ID HIT");
+
     const jobId = req.params.id;
-        const userId = req.user.id;
+    const userId = req.user.id;
+
+    console.log("Job:", jobId);
+    console.log("User:", userId);
 
     if (!mongoose.Types.ObjectId.isValid(jobId)) {
       return res.status(400).json({
