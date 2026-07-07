@@ -28,6 +28,7 @@ const getUserProfile = async (req, res) => {
 };
 
 const updateUserProfile = async (req, res) => {
+  console.log("update hitt")
   try {
     const userId = req.user.id;
 
