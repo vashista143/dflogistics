@@ -4,6 +4,7 @@ const {
   getUserProfile,
   updateUserProfile,
   updateCurrentLocation,
+  updateProfileImage,
 } = require("../controllers/usercontroller");
 const upload = require("../middleware/upload");
 
