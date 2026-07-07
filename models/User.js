@@ -77,6 +77,61 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    gender: {
+  type: String,
+  enum: ["Male", "Female", "Other"],
+  default: "",
+},
+
+dateOfBirth: {
+  type: Date,
+},
+
+country: {
+  type: String,
+  default: "",
+},
+
+state: {
+  type: String,
+  default: "",
+},
+
+city: {
+  type: String,
+  default: "",
+},
+
+zipCode: {
+  type: String,
+  default: "",
+},
+
+homeAddress: {
+  type: String,
+  default: "",
+},
+
+drivingexp: {
+  type: String,
+  default: "",
+},
+
+trucktype: {
+  type: String,
+  default: "",
+},
+
+notificationSettings: {
+  type: Boolean,
+  default: true,
+},
+
+theme: {
+  type: String,
+  enum: ["light", "dark"],
+  default: "light",
+},
   },
   {
     timestamps: true,
