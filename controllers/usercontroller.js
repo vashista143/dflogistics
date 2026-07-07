@@ -199,4 +199,5 @@ module.exports = {
   getUserProfile,
   updateUserProfile,
   updateCurrentLocation,
+  updateProfileImage,
 };
