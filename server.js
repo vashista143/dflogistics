@@ -7,6 +7,7 @@ const connectDB = require("./db/connection");
 const authRoutes = require("./routes/auth.route");
 const userRoutes = require("./routes/user.route");
 const jobRoutes = require("./routes/jobs.route");
+import expenseRoutes from "./routes/expense.route";
 // const loadRoutes = require("./routes/loadRoutes");
 // const locationRoutes = require("./routes/locationRoutes");
 // const postRoutes = require("./routes/postRoutes");
@@ -48,6 +49,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 
 app.use("/api/places", placesRoutes);
+
+app.use("/api/expensetracker", expenseRoutes);
 
 // app.use("/api/loads", loadRoutes);
 
