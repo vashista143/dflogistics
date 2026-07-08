@@ -55,7 +55,7 @@ const getExpenses = async (req, res) => {
     }).sort({
       expenseDate: -1,
     });
-
+    console.log(expenses);
     return res.json({
       success: true,
       count: expenses.length,
