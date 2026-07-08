@@ -7,7 +7,7 @@ const connectDB = require("./db/connection");
 const authRoutes = require("./routes/auth.route");
 const userRoutes = require("./routes/user.route");
 const jobRoutes = require("./routes/jobs.route");
-import expenseRoutes from "./routes/expense.route";
+import expenseRoutes = require("./routes/expense.route");
 // const loadRoutes = require("./routes/loadRoutes");
 // const locationRoutes = require("./routes/locationRoutes");
 // const postRoutes = require("./routes/postRoutes");
