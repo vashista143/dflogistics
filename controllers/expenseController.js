@@ -46,28 +46,52 @@ const createExpense = async (req, res) => {
 // GET /api/expenses
 // ====================================
 
+// const getExpenses = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+
+//     const expenses = await Expense.find({
+//       user: userId,
+//     }).sort({
+//       expenseDate: -1,
+//     });
+//     console.log(expenses);
+//     return res.json({
+//       success: true,
+//       count: expenses.length,
+//       data: expenses,
+//     });
+//   } catch (error) {
+//     console.error(error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
 const getExpenses = async (req, res) => {
   try {
-    const userId = req.user.id;
+    console.log("Logged in user:", req.user);
 
-    const expenses = await Expense.find({
-      user: userId,
-    }).sort({
-      expenseDate: -1,
+    const allExpenses = await Expense.find();
+
+    console.log("ALL:", allExpenses.length);
+
+    const userExpenses = await Expense.find({
+      user: req.user.id,
     });
-    console.log(expenses);
+
+    console.log("USER:", userExpenses.length);
+
     return res.json({
       success: true,
-      count: expenses.length,
-      data: expenses,
+      all: allExpenses.length,
+      user: userExpenses.length,
+      data: userExpenses,
     });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+  } catch (err) {
+    console.log(err);
   }
 };
 
