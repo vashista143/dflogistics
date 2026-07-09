@@ -115,9 +115,9 @@ const getJobById = async (req, res) => {
         applicant: userId,
       });
       console.log("alreadyApplied:", alreadyApplied);
-
+    
     const isApplied = alreadyApplied !== null;
-
+      console.log(job)
 res.status(200).json({
   success: true,
   message: "Job fetched successfully.",
@@ -199,9 +199,7 @@ const applyForJob = async (req, res) => {
   }
 };
 
-module.exports = {
-  applyForJob,
-};
+
 
 // ======================================
 // GET /api/jobs/applications
@@ -238,7 +236,7 @@ const getAppliedJobs = async (req, res) => {
 const createJob = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log(req.body);
+
     const {
       title,
       company,
@@ -255,7 +253,7 @@ const createJob = async (req, res) => {
       applicationDeadline,
       questions,
     } = req.body;
-      const validQuestions =
+    const validQuestions =
   (questions || [])
     .map((q) => q.trim())
     .filter(Boolean);
@@ -275,8 +273,9 @@ const createJob = async (req, res) => {
       applicationDeadline,
       questions: validQuestions,
       postedBy: userId,
-    });
 
+    });
+    console.log(job);
     return res.status(201).json({
       success: true,
       message: "Job created successfully.",
@@ -348,6 +347,7 @@ const getPostedJobs = async (req, res) => {
       postedBy: userId,
     })
       .sort({ createdAt: -1 });
+      console.log(jobs);
     return res.status(200).json({
       success: true,
       count: jobs.length,
@@ -362,7 +362,50 @@ const getPostedJobs = async (req, res) => {
     });
   }
 };
+const updateApplicationStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
+    if (
+      ![
+        "Applied",
+        "Under Review",
+        "Accepted",
+        "Rejected",
+      ].includes(status)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    const application =
+      await JobApplication.findById(id);
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    application.status = status;
+
+    await application.save();
+
+    res.json({
+      success: true,
+      data: application,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
 const getApplicants = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -418,4 +461,5 @@ module.exports = {
   getAppliedJobs,
   getPostedJobs,
   getApplicants,
+  updateApplicationStatus,
 };
