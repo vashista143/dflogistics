@@ -239,7 +239,7 @@ const getAppliedJobs = async (req, res) => {
 const createJob = async (req, res) => {
   try {
     const userId = req.user.id;
-
+    console.log(req.body);
     const {
       title,
       company,
@@ -255,7 +255,7 @@ const createJob = async (req, res) => {
       openings,
       applicationDeadline,
     } = req.body;
-
+    
     const job = await Job.create({
       title,
       company,
