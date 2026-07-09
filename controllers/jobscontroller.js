@@ -115,7 +115,6 @@ const getJobById = async (req, res) => {
         applicant: userId,
       });
       console.log("alreadyApplied:", alreadyApplied);
-            console.log(job)
 
     const isApplied = alreadyApplied !== null;
 
@@ -272,7 +271,6 @@ const createJob = async (req, res) => {
       applicationDeadline,
       postedBy: userId,
     });
-        console.log(job);
 
     return res.status(201).json({
       success: true,
@@ -345,7 +343,6 @@ const getPostedJobs = async (req, res) => {
       postedBy: userId,
     })
       .sort({ createdAt: -1 });
-      console.log(jobs);
     return res.status(200).json({
       success: true,
       count: jobs.length,
