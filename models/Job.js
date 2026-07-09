@@ -99,6 +99,12 @@ const jobSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    questions: [
+  {
+    type: String,
+    trim: true,
+  },
+],
   },
   {
     timestamps: true,
