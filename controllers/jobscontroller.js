@@ -115,7 +115,8 @@ const getJobById = async (req, res) => {
         applicant: userId,
       });
       console.log("alreadyApplied:", alreadyApplied);
-    
+            console.log(job)
+
     const isApplied = alreadyApplied !== null;
 
 res.status(200).json({
