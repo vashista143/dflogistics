@@ -140,10 +140,16 @@ res.status(200).json({
 // POST /api/jobs/:id/apply
 // Apply for Job
 // ======================================
+const mongoose = require("mongoose");
+const Job = require("../models/Job");
+const JobApplication = require("../models/JobApplication");
+
 const applyForJob = async (req, res) => {
   try {
     const userId = req.user.id;
     const jobId = req.params.id;
+
+    const { answers = {} } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(jobId)) {
       return res.status(400).json({
@@ -173,9 +179,10 @@ const applyForJob = async (req, res) => {
       });
     }
 
-    await JobApplication.create({
+    const application = await JobApplication.create({
       job: jobId,
       applicant: userId,
+      answers,
     });
 
     job.applicants.push(userId);
@@ -184,6 +191,7 @@ const applyForJob = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Applied successfully.",
+      data: application,
     });
   } catch (error) {
     console.error("Apply Job Error:", error);
@@ -193,6 +201,10 @@ const applyForJob = async (req, res) => {
       message: "Internal Server Error",
     });
   }
+};
+
+module.exports = {
+  applyForJob,
 };
 
 // ======================================
