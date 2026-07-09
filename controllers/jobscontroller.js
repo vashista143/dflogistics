@@ -253,8 +253,12 @@ const createJob = async (req, res) => {
       benefits,
       openings,
       applicationDeadline,
+      questions,
     } = req.body;
-    
+      const validQuestions =
+  (questions || [])
+    .map((q) => q.trim())
+    .filter(Boolean);
     const job = await Job.create({
       title,
       company,
@@ -269,6 +273,7 @@ const createJob = async (req, res) => {
       benefits,
       openings,
       applicationDeadline,
+      questions: validQuestions,
       postedBy: userId,
     });
 
