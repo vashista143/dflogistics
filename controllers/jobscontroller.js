@@ -140,10 +140,6 @@ res.status(200).json({
 // POST /api/jobs/:id/apply
 // Apply for Job
 // ======================================
-const mongoose = require("mongoose");
-const Job = require("../models/Job");
-const JobApplication = require("../models/JobApplication");
-
 const applyForJob = async (req, res) => {
   try {
     const userId = req.user.id;
