@@ -15,7 +15,11 @@ const jobApplicationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
+    answers: {
+  type: Map,
+  of: String,
+  default: {},
+},
     status: {
       type: String,
       enum: [
