@@ -10,12 +10,17 @@ const {
   updateJob,
   getPostedJobs,
   getApplicants,
+  updateApplicationStatus,
 } = require("../controllers/jobscontroller");
 
 const authMiddleware = require("../middleware/middleware");
 
 router.get("/", authMiddleware, getAllJobs);
-
+router.put(
+  "/applications/:id/status",
+  authMiddleware,
+  updateApplicationStatus
+);
 router.post("/", authMiddleware, createJob);
 
 router.get("/applications", authMiddleware, getAppliedJobs);
