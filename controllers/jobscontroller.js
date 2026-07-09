@@ -272,6 +272,7 @@ const createJob = async (req, res) => {
       applicationDeadline,
       postedBy: userId,
     });
+        console.log(job);
 
     return res.status(201).json({
       success: true,
