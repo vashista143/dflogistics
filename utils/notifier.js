@@ -1,6 +1,6 @@
 const admin = require("firebase-admin");
 const User = require("../models/User");
-const serviceAccount = require("../path-to-your-firebase-key.json");
+const serviceAccount = require("../fir-rtc-e6811-firebase-adminsdk-fbsvc-c883570c91.json");
 
 // Initialize Firebase App
 admin.initializeApp({
