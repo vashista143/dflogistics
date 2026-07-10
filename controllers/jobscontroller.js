@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
-const { broadcastNewJobNotification } = require("../utils/notifier");
 
 // ======================================
 // GET /api/jobs
