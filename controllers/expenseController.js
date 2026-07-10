@@ -26,7 +26,7 @@ const createExpense = async (req, res) => {
       location,
       expenseDate,
     });
-
+    console.log(expense);
     return res.status(201).json({
       success: true,
       message: "Expense added successfully.",
@@ -55,7 +55,7 @@ const getExpenses = async (req, res) => {
     }).sort({
       expenseDate: -1,
     });
-
+    console.log(expenses)
     return res.json({
       success: true,
       count: expenses.length,
