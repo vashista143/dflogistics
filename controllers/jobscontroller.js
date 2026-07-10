@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
+const { broadcastNewJobNotification } = require("../utils/notifier");
 
 // ======================================
 // GET /api/jobs
@@ -276,6 +277,7 @@ const createJob = async (req, res) => {
 
     });
     console.log(job);
+    broadcastNewJobNotification(job.title, job.company);
     return res.status(201).json({
       success: true,
       message: "Job created successfully.",
