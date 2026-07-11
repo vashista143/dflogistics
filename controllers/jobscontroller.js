@@ -7,12 +7,7 @@ const JobApplication = require("../models/JobApplication");
 // ======================================
 const getAllJobs = async (req, res) => {
   try {
-    const {
-      type,
-      search,
-      page = 1,
-      limit = 10,
-    } = req.query;
+    const { type, search } = req.query;
 
     const filter = {
       isActive: true,
@@ -24,52 +19,21 @@ const getAllJobs = async (req, res) => {
 
     if (search) {
       filter.$or = [
-        {
-          title: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          company: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          "location.city": {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          "location.state": {
-            $regex: search,
-            $options: "i",
-          },
-        },
+        { title: { $regex: search, $options: "i" } },
+        { company: { $regex: search, $options: "i" } },
+        { "location.city": { $regex: search, $options: "i" } },
+        { "location.state": { $regex: search, $options: "i" } },
       ];
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
-
-    const jobs = await Job.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit));
-
-    const totalJobs = await Job.countDocuments(filter);
+    // Removed .skip() and .limit() to retrieve every matching document
+    const jobs = await Job.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
-      message: "Jobs fetched successfully.",
+      message: "All jobs fetched successfully.",
+      count: jobs.length, // Useful for the frontend to know the total size
       data: jobs,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        totalJobs,
-        totalPages: Math.ceil(totalJobs / Number(limit)),
-      },
     });
   } catch (error) {
     console.error("Get Jobs Error:", error);
@@ -80,7 +44,6 @@ const getAllJobs = async (req, res) => {
     });
   }
 };
-
 // ======================================
 // GET /api/jobs/:id
 // Get single job
