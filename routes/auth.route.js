@@ -6,7 +6,7 @@ const {
   loginUser,
   logoutUser,
   refreshAccessToken,
-  applelogin,
+  // applelogin,
   googleLogin,
 } = require("../controllers/authcontroller");
 
@@ -16,7 +16,7 @@ router.post("/register", registerUser);
 
 router.post("/login", loginUser);
 
-router.post("/apple", applelogin);
+// router.post("/apple", applelogin);
 
 router.post("/google", googleLogin);
 
