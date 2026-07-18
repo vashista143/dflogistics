@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-
+const appleSigninAuth = require("apple-signin-auth");
 const {generateAccessToken, generateRefreshToken,} = require("../utils/generateTokens");
 
 const registerUser = async (req, res) => {
@@ -132,6 +132,12 @@ const loginUser = async (req, res) => {
             message:"No account exist with given mail"
         })
     }
+    if (!user.password) {
+    return res.status(400).json({
+        success:false,
+        message:"This account uses Sign in with Apple."
+    });
+}
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
         return res.status(401).json({
@@ -251,10 +257,105 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
+const applelogin = async (req, res) => {
+  try {
+    const {
+      identityToken,
+      appleUser,
+      email,
+      fullName,
+    } = req.body;
+
+    if (!identityToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Identity token is required.",
+      });
+    }
+
+    // Verify Apple token
+    const appleData = await appleSigninAuth.verifyIdToken(
+      identityToken,
+      {
+        audience: process.env.APPLE_BUNDLE_ID, // com.dflogistics.truckerkit
+        ignoreExpiration: false,
+      }
+    );
+
+    let user = await User.findOne({
+      appleId: appleData.sub,
+    });
+
+    // If Apple ID doesn't exist, check email
+    if (!user && appleData.email) {
+      user = await User.findOne({
+        email: appleData.email,
+      });
+
+      // Existing email user -> link Apple account
+      if(user){
+    user.appleId = appleData.sub;
+    await user.save({ validateBeforeSave:false });
+}
+    }
+
+    // Brand new user
+    if (!user) {
+      user = await User.create({
+        name:
+          fullName?.givenName
+            ? `${fullName.givenName} ${fullName.familyName || ""}`.trim()
+            : "Apple User",
+
+        email:
+          appleData.email ||
+          email ||
+          `${appleUser}@apple.com`,
+
+        appleId: appleData.sub,
+      });
+    }
+
+    const accessToken = generateAccessToken(user._id);
+
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    const userData = user.toObject();
+
+    delete userData.password;
+    delete userData.refreshToken;
+
+    return res.status(200).json({
+      success: true,
+      message: "Apple login successful.",
+      accessToken,
+      refreshToken,
+      user: userData,
+    });
+
+  } catch (error) {
+
+    console.error("Apple Login Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Apple authentication failed.",
+    });
+
+  }
+};
 
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
+  applelogin,
+
 };
