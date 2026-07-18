@@ -258,6 +258,7 @@ const refreshAccessToken = async (req, res) => {
 };
 
 const applelogin = async (req, res) => {
+  console.log("Apple Login Request:", req.body);
   try {
     const {
       identityToken,
@@ -281,7 +282,7 @@ const applelogin = async (req, res) => {
         ignoreExpiration: false,
       }
     );
-
+    console.log("Apple Data:", appleData);
     // 1. Prioritize verified email extracted directly from Apple secure token payload
     const finalEmail = appleData.email || email;
 
@@ -343,12 +344,13 @@ const applelogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Apple Login Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Apple authentication failed.",
-    });
-  }
+  console.error("Apple Login Error:", error);
+
+  return res.status(500).json({
+    success: false,
+    message: error.message,
+  });
+}
 };
 module.exports = {
   registerUser,
