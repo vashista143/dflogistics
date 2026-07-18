@@ -273,61 +273,64 @@ const applelogin = async (req, res) => {
       });
     }
 
-    // Verify Apple token
+    // Verify Apple token and decode user data natively attached to it
     const appleData = await appleSigninAuth.verifyIdToken(
       identityToken,
       {
-        audience: process.env.APPLE_BUNDLE_ID, // com.dflogistics.truckerkit
+        audience: process.env.APPLE_BUNDLE_ID, 
         ignoreExpiration: false,
       }
     );
 
-    let user = await User.findOne({
-      appleId: appleData.sub,
-    });
+    // 1. Prioritize verified email extracted directly from Apple secure token payload
+    const finalEmail = appleData.email || email;
 
-    // If Apple ID doesn't exist, check email
-    if (!user && appleData.email) {
-      user = await User.findOne({
-        email: appleData.email,
+    if (!finalEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Email could not be retrieved from Apple account.",
       });
-
-      // Existing email user -> link Apple account
-      if(user){
-    user.appleId = appleData.sub;
-    await user.save({ validateBeforeSave:false });
-}
     }
 
-    // Brand new user
+    // Try finding user by Apple Unique Sub ID
+    let user = await User.findOne({ appleId: appleData.sub });
+
+    // If Apple ID doesn't exist, search by the verified email
     if (!user) {
+      user = await User.findOne({ email: finalEmail });
+
+      // Existing email user -> link Apple account ID
+      if (user) {
+        user.appleId = appleData.sub;
+        await user.save({ validateBeforeSave: false });
+      }
+    }
+
+    // Brand new user creation
+    if (!user) {
+      // Create readable name from payload or fallback to email prefix if completely empty
+      let finalName = "Apple User";
+      if (fullName?.givenName) {
+        finalName = `${fullName.givenName} ${fullName.familyName || ""}`.trim();
+      } else {
+        finalName = finalEmail.split("@")[0]; // e.g., "john.doe" from john.doe@example.com
+      }
+
       user = await User.create({
-        name:
-          fullName?.givenName
-            ? `${fullName.givenName} ${fullName.familyName || ""}`.trim()
-            : "Apple User",
-
-        email:
-          appleData.email ||
-          email ||
-          `${appleUser}@apple.com`,
-
+        name: finalName,
+        email: finalEmail,
         appleId: appleData.sub,
+        mobileNumber: undefined, // Explicitly left out/undefined as requested
       });
     }
 
     const accessToken = generateAccessToken(user._id);
-
     const refreshToken = generateRefreshToken(user._id);
 
     user.refreshToken = refreshToken;
-
-    await user.save({
-      validateBeforeSave: false,
-    });
+    await user.save({ validateBeforeSave: false });
 
     const userData = user.toObject();
-
     delete userData.password;
     delete userData.refreshToken;
 
@@ -340,17 +343,13 @@ const applelogin = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error("Apple Login Error:", error);
-
     return res.status(500).json({
       success: false,
       message: "Apple authentication failed.",
     });
-
   }
 };
-
 module.exports = {
   registerUser,
   loginUser,
