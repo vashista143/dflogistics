@@ -20,10 +20,14 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-
+    appleId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: false,
       minlength: 8,
     },
 
