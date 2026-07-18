@@ -257,74 +257,61 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
-const applelogin = async (req, res) => {
-  console.log("Apple Login Request:", req.body);
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
+
+const googleLogin = async (req, res) => {
   try {
-    const {
-      identityToken,
-      appleUser,
-      email,
-      fullName,
-    } = req.body;
+    const { idToken } = req.body;
 
-    if (!identityToken) {
+    if (!idToken) {
       return res.status(400).json({
         success: false,
-        message: "Identity token is required.",
+        message: "ID Token from Google is required.",
       });
     }
 
-    // Verify Apple token and decode user data natively attached to it
-    const appleData = await appleSigninAuth.verifyIdToken(
-      identityToken,
-      {
-        audience: process.env.APPLE_BUNDLE_ID, 
-        ignoreExpiration: false,
-      }
-    );
-    console.log("Apple Data:", appleData);
-    // 1. Prioritize verified email extracted directly from Apple secure token payload
-    const finalEmail = appleData.email || email;
+    // Verify the authenticity of the token payload using Google public certs
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: process.env.GOOGLE_WEB_CLIENT_ID, // Use the Web Client ID here
+    });
+    
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
 
-    if (!finalEmail) {
+    if (!email) {
       return res.status(400).json({
         success: false,
-        message: "Email could not be retrieved from Apple account.",
+        message: "Unable to retrieve email from your Google account.",
       });
     }
 
-    // Try finding user by Apple Unique Sub ID
-    let user = await User.findOne({ appleId: appleData.sub });
+    // 1. Look up existing profile via unique Google Subject Identifier
+    let user = await User.findOne({ googleId });
 
-    // If Apple ID doesn't exist, search by the verified email
+    // 2. If no ID match, fallback to search by the verified email address
     if (!user) {
-      user = await User.findOne({ email: finalEmail });
+      user = await User.findOne({ email });
 
-      // Existing email user -> link Apple account ID
+      // Link Google profile ID if email match was found
       if (user) {
-        user.appleId = appleData.sub;
+        user.googleId = googleId;
         await user.save({ validateBeforeSave: false });
       }
     }
 
-    // Brand new user creation
+    // 3. Complete registration for a brand new account context
     if (!user) {
-      // Create readable name from payload or fallback to email prefix if completely empty
-      let finalName = "Apple User";
-      if (fullName?.givenName) {
-        finalName = `${fullName.givenName} ${fullName.familyName || ""}`.trim();
-      } else {
-        finalName = finalEmail.split("@")[0]; // e.g., "john.doe" from john.doe@example.com
-      }
-
       user = await User.create({
-        name: finalName,
-        email: finalEmail,
-        appleId: appleData.sub,
-        mobileNumber: undefined, // Explicitly left out/undefined as requested
+        name: name || "Google User",
+        email: email,
+        googleId: googleId,
+        mobileNumber: undefined, // Leave undefined until updated via user setup profiles
       });
     }
 
+    // Generate app application tokens matching original configuration paradigms
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
@@ -337,26 +324,120 @@ const applelogin = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Apple login successful.",
+      message: "Google login successful.",
       accessToken,
       refreshToken,
       user: userData,
     });
 
   } catch (error) {
-  console.error("Apple Login Error:", error);
-
-  return res.status(500).json({
-    success: false,
-    message: error.message,
-  });
-}
+    console.error("Google Authentication Exception:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Google verification lifecycle failed.",
+    });
+  }
 };
+
+// const applelogin = async (req, res) => {
+//   try {
+//     const {
+//       identityToken,
+//       appleUser,
+//       email,
+//       fullName,
+//     } = req.body;
+
+//     if (!identityToken) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Identity token is required.",
+//       });
+//     }
+
+//     // Verify Apple token and decode user data natively attached to it
+//     const appleData = await appleSigninAuth.verifyIdToken(
+//       identityToken,
+//       {
+//         audience: process.env.APPLE_BUNDLE_ID, 
+//         ignoreExpiration: false,
+//       }
+//     );
+
+//     // 1. Prioritize verified email extracted directly from Apple secure token payload
+//     const finalEmail = appleData.email || email;
+
+//     if (!finalEmail) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email could not be retrieved from Apple account.",
+//       });
+//     }
+
+//     // Try finding user by Apple Unique Sub ID
+//     let user = await User.findOne({ appleId: appleData.sub });
+
+//     // If Apple ID doesn't exist, search by the verified email
+//     if (!user) {
+//       user = await User.findOne({ email: finalEmail });
+
+//       // Existing email user -> link Apple account ID
+//       if (user) {
+//         user.appleId = appleData.sub;
+//         await user.save({ validateBeforeSave: false });
+//       }
+//     }
+
+//     // Brand new user creation
+//     if (!user) {
+//       // Create readable name from payload or fallback to email prefix if completely empty
+//       let finalName = "Apple User";
+//       if (fullName?.givenName) {
+//         finalName = `${fullName.givenName} ${fullName.familyName || ""}`.trim();
+//       } else {
+//         finalName = finalEmail.split("@")[0]; // e.g., "john.doe" from john.doe@example.com
+//       }
+
+//       user = await User.create({
+//         name: finalName,
+//         email: finalEmail,
+//         appleId: appleData.sub,
+//         mobileNumber: undefined, // Explicitly left out/undefined as requested
+//       });
+//     }
+
+//     const accessToken = generateAccessToken(user._id);
+//     const refreshToken = generateRefreshToken(user._id);
+
+//     user.refreshToken = refreshToken;
+//     await user.save({ validateBeforeSave: false });
+
+//     const userData = user.toObject();
+//     delete userData.password;
+//     delete userData.refreshToken;
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Apple login successful.",
+//       accessToken,
+//       refreshToken,
+//       user: userData,
+//     });
+
+//   } catch (error) {
+//     console.error("Apple Login Error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Apple authentication failed.",
+//     });
+//   }
+// };
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
-  applelogin,
+  // applelogin,
+  googleLogin
 
 };
