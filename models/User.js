@@ -33,8 +33,9 @@ const userSchema = new mongoose.Schema(
 
     mobileNumber: {
       type: String,
-      required: false,
       unique: true,
+      sparse: true,
+      default: undefined,
       trim: true,
     },
 
