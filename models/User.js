@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema(
       minlength: 2,
       maxlength: 50,
     },
+    googleId: {
+  type: String,
+  unique: true,
+  sparse: true,
+},
     profileImage: {
     type: String,
     default: "",
