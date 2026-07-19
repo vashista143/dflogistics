@@ -307,7 +307,9 @@ const googleLogin = async (req, res) => {
         name: name || "Google User",
         email: email,
         googleId: googleId,
-        mobileNumber: undefined, // Leave undefined until updated via user setup profiles
+        mobileNumber: undefined,
+          profileImage: picture,
+// Leave undefined until updated via user setup profiles
       });
     }
 
