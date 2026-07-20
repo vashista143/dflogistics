@@ -44,7 +44,7 @@ const updateUserProfile = async (req, res) => {
 
     const allowedFields = [
       "name",
-      "phoneNumber",
+      "mobileNumber",
       "profileImage",
       "dateOfBirth",
       "gender",
@@ -195,9 +195,46 @@ const updateProfileImage = async (req, res) => {
   }
 };
 
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // TODO:
+    // Delete any user-related data here if you have other collections.
+    // Example:
+    // await JobApplication.deleteMany({ user: userId });
+    // await CommunityPost.deleteMany({ user: userId });
+    // await Notification.deleteMany({ user: userId });
+
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Account deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete Account Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
   updateCurrentLocation,
   updateProfileImage,
+  deleteAccount,
 };
