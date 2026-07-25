@@ -67,22 +67,7 @@ const userSchema = new mongoose.Schema(
       },
     },
 
-    subscriptionStatus: {
-      type: String,
-      enum: ["inactive", "active", "expired"],
-      default: "inactive",
-    },
-
-    subscriptionStart: Date,
-
-    subscriptionEnd: Date,
-
-    paymentId: String,
-
-    orderId: String,
-
-    amountPaid: Number,
-
+    
     refreshToken: {
       type: String,
       default: null,
