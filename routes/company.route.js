@@ -1,18 +1,25 @@
 const express = require("express");
 const router = express.Router();
+const authMiddleware = require("../middleware/middleware"); // Ensure your JWT auth middleware is imported
 const {
   registerCompany,
   loginCompany,
   googleAuthCompany,
+  getCompanyProfile,
+  updateCompanyProfile,
+  deleteCompanyAccount,
+  logoutCompany,
 } = require("../controllers/companyAuthController");
 
-// POST /auth/company/register
+// Public
 router.post("/register", registerCompany);
-
-// POST /auth/company/login
 router.post("/login", loginCompany);
-
-// POST /auth/company/google
 router.post("/google", googleAuthCompany);
+
+// Authenticated Company Endpoints
+router.get("/profile", authMiddleware, getCompanyProfile);
+router.put("/profile", authMiddleware, updateCompanyProfile);
+router.delete("/delete-account", authMiddleware, deleteCompanyAccount);
+router.post("/logout", authMiddleware, logoutCompany);
 
 module.exports = router;
