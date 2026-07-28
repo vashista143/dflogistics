@@ -5,9 +5,10 @@ const placesRoutes = require("./routes/places.route");
 const connectDB = require("./db/connection");
 
 const authRoutes = require("./routes/auth.route");
+const companyRoutes = require("./routes/company.route"); // Added Company Routes
 const userRoutes = require("./routes/user.route");
 const jobRoutes = require("./routes/jobs.route");
-const expenseRoutes = require( "./routes/expense.route");
+const expenseRoutes = require("./routes/expense.route");
 // const loadRoutes = require("./routes/loadRoutes");
 // const locationRoutes = require("./routes/locationRoutes");
 // const postRoutes = require("./routes/postRoutes");
@@ -41,8 +42,9 @@ app.get("/", (req, res) => {
   });
 });
 
-
 app.use("/api/auth", authRoutes);
+
+app.use("/api/auth/company", companyRoutes); // Integrated Company Auth Routes
 
 app.use("/api/users", userRoutes);
 
