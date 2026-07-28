@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema(
   unique: true,
   sparse: true,
 },
+    isdriver:{
+      type: Boolean,
+      default:true,
+    },
     profileImage: {
     type: String,
     default: "",
