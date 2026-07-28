@@ -5,7 +5,6 @@ const { OAuth2Client } = require("google-auth-library");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Helper to generate access and refresh tokens
 const generateTokens = (companyId) => {
   const accessToken = jwt.sign(
     { id: companyId, role: "company" },
@@ -22,7 +21,6 @@ const generateTokens = (companyId) => {
   return { accessToken, refreshToken };
 };
 
-// Company Register
 exports.registerCompany = async (req, res) => {
   try {
     const { companyName, email, password, phoneNumber, dotNumber, mcNumber } = req.body;
@@ -56,18 +54,13 @@ exports.registerCompany = async (req, res) => {
     delete companyData.password;
     delete companyData.refreshTokens;
 
-    res.status(201).json({
-      accessToken,
-      refreshToken,
-      company: companyData,
-    });
+    res.status(201).json({ accessToken, refreshToken, company: companyData });
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({ message: "Server error during registration" });
   }
 };
 
-// Company Email/Password Login
 exports.loginCompany = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -87,7 +80,6 @@ exports.loginCompany = async (req, res) => {
     }
 
     const { accessToken, refreshToken } = generateTokens(company._id);
-
     company.refreshTokens.push(refreshToken);
     await company.save();
 
@@ -95,18 +87,13 @@ exports.loginCompany = async (req, res) => {
     delete companyData.password;
     delete companyData.refreshTokens;
 
-    res.status(200).json({
-      accessToken,
-      refreshToken,
-      company: companyData,
-    });
+    res.status(200).json({ accessToken, refreshToken, company: companyData });
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({ message: "Server error during login" });
   }
 };
 
-// Company Google Auth
 exports.googleAuthCompany = async (req, res) => {
   try {
     const { idToken } = req.body;
@@ -148,13 +135,63 @@ exports.googleAuthCompany = async (req, res) => {
     delete companyData.password;
     delete companyData.refreshTokens;
 
-    res.status(200).json({
-      accessToken,
-      refreshToken,
-      company: companyData,
-    });
+    res.status(200).json({ accessToken, refreshToken, company: companyData });
   } catch (error) {
     console.error("Google Auth Error:", error);
     res.status(401).json({ message: "Invalid Google token" });
+  }
+};
+
+// --- NEW COMPANY PROFILE CONTROLLERS ---
+
+exports.getCompanyProfile = async (req, res) => {
+  try {
+    const company = await Company.findById(req.user.id).select("-password -refreshTokens");
+    if (!company) {
+      return res.status(404).json({ message: "Company profile not found" });
+    }
+    res.status(200).json({ success: true, data: company });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching company profile" });
+  }
+};
+
+exports.updateCompanyProfile = async (req, res) => {
+  try {
+    const { companyName, phoneNumber, dotNumber, mcNumber, website, address } = req.body;
+
+    const company = await Company.findById(req.user.id);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    if (companyName) company.companyName = companyName;
+    if (phoneNumber !== undefined) company.phoneNumber = phoneNumber;
+    if (dotNumber !== undefined) company.dotNumber = dotNumber;
+    if (mcNumber !== undefined) company.mcNumber = mcNumber;
+    if (website !== undefined) company.website = website;
+    if (address) company.address = { ...company.address, ...address };
+
+    await company.save();
+    res.status(200).json({ success: true, data: company });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+};
+
+exports.deleteCompanyAccount = async (req, res) => {
+  try {
+    await Company.findByIdAndDelete(req.user.id);
+    res.status(200).json({ success: true, message: "Company account deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete company account" });
+  }
+};
+
+exports.logoutCompany = async (req, res) => {
+  try {
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Logout failed" });
   }
 };
