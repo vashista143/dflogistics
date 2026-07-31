@@ -60,6 +60,7 @@ const formattedParking = parkingPlaces.map((place) => ({
     place.entryPoints?.find((e) => e.preferredRouting)?.position ||
     place.position,
 }));
+    console.log(formattedParking)
 
 return res.status(200).json({
   success: true,
@@ -132,7 +133,7 @@ const getNearbyFuelStations = async (req, res) => {
         place.entryPoints?.find((e) => e.preferredRouting)?.position ||
         place.position,
     }));
-
+    console.log(fuelStations)
     return res.status(200).json({
       success: true,
       count: fuelStations.length,
