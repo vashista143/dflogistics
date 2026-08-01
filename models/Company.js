@@ -17,12 +17,16 @@ const CompanySchema = new mongoose.Schema(
     password: {
       type: String,
       required: function () {
-        return !this.googleId; // Required if not registering through Google OAuth
+        return !this.googleId;
       },
     },
     googleId: {
       type: String,
       default: null,
+    },
+    iscompany: {
+      type: Boolean,
+      default: true,
     },
     phoneNumber: {
       type: String,
@@ -45,18 +49,17 @@ const CompanySchema = new mongoose.Schema(
     },
     dotNumber: {
       type: String,
-      default: "", // USDOT Number if applicable
+      default: "",
     },
     mcNumber: {
       type: String,
-      default: "", // Motor Carrier Number if applicable
+      default: "",
     },
     role: {
       type: String,
       enum: ["company", "admin"],
       default: "company",
     },
-    // Subscription Management
     subscription: {
       sku: {
         type: String,
