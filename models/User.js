@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema(
   unique: true,
   sparse: true,
 },
+  role: {
+  type: String,
+  enum: ["user", "admin"],
+  default: "user",
+},
     isdriver:{
       type: Boolean,
       default:true,
