@@ -53,7 +53,7 @@ const getPendingJobs = async (req, res) => {
   try {
     // Find any job that is inactive OR unverified
     const pendingJobs = await Job.find({
-      $or: [{ isActive: false }, { isverified: false }, { isVerified: false }],
+      $or: [ { isverified: false }, { isVerified: false }],
     })
       .populate("postedBy", "name email companyName")
       .sort({ createdAt: -1 });
