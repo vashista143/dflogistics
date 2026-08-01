@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
+const User= require("../models/User")
 
 // ======================================
 // GET /api/jobs
