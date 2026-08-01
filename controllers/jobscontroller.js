@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
-const { broadcastNewJobNotification } = require("../utils/notifier");
 
 // ======================================
 // GET /api/jobs
@@ -277,9 +276,6 @@ const createJob = async (req, res) => {
       isverified: isApproved, // Sync both camelCase and lowercase field names
     });
 
-    if (isApproved) {
-      broadcastNewJobNotification(job.title, job.company);
-    }
 
     return res.status(201).json({
       success: true,
@@ -326,8 +322,6 @@ const verifyJob = async (req, res) => {
     job.isVerified = true;
     job.isverified = true;
     await job.save();
-
-    broadcastNewJobNotification(job.title, job.company);
 
     return res.status(200).json({
       success: true,
