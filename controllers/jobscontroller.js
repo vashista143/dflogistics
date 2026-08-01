@@ -4,7 +4,7 @@ const JobApplication = require("../models/JobApplication");
 
 // ======================================
 // GET /api/jobs
-// Get all jobs (Only returns published/active jobs)
+// Get all jobs (Only returns published & verified jobs)
 // ======================================
 const getAllJobs = async (req, res) => {
   try {
@@ -12,6 +12,7 @@ const getAllJobs = async (req, res) => {
 
     const filter = {
       isActive: true,
+      $or: [{ isverified: true }, { isVerified: true }],
     };
 
     if (type) {
@@ -19,11 +20,15 @@ const getAllJobs = async (req, res) => {
     }
 
     if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { company: { $regex: search, $options: "i" } },
-        { "location.city": { $regex: search, $options: "i" } },
-        { "location.state": { $regex: search, $options: "i" } },
+      filter.$and = [
+        {
+          $or: [
+            { title: { $regex: search, $options: "i" } },
+            { company: { $regex: search, $options: "i" } },
+            { "location.city": { $regex: search, $options: "i" } },
+            { "location.state": { $regex: search, $options: "i" } },
+          ],
+        },
       ];
     }
 
@@ -31,7 +36,7 @@ const getAllJobs = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "All jobs fetched successfully.",
+      message: "All active and verified jobs fetched successfully.",
       count: jobs.length,
       data: jobs,
     });
@@ -44,6 +49,7 @@ const getAllJobs = async (req, res) => {
     });
   }
 };
+
 
 // ======================================
 // GET /api/jobs/pending
