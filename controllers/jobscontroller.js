@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
 const Job = require("../models/Job");
 const JobApplication = require("../models/JobApplication");
+const { broadcastNewJobNotification } = require("../utils/notifier");
+
 // ======================================
 // GET /api/jobs
-// Get all jobs
+// Get all jobs (Only returns published/active jobs)
 // ======================================
 const getAllJobs = async (req, res) => {
   try {
@@ -26,13 +28,12 @@ const getAllJobs = async (req, res) => {
       ];
     }
 
-    // Removed .skip() and .limit() to retrieve every matching document
     const jobs = await Job.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       message: "All jobs fetched successfully.",
-      count: jobs.length, // Useful for the frontend to know the total size
+      count: jobs.length,
       data: jobs,
     });
   } catch (error) {
@@ -44,6 +45,35 @@ const getAllJobs = async (req, res) => {
     });
   }
 };
+
+// ======================================
+// GET /api/jobs/pending
+// Get all pending job submissions (Admin Only)
+// ======================================
+const getPendingJobs = async (req, res) => {
+  try {
+    // Find any job that is inactive OR unverified
+    const pendingJobs = await Job.find({
+      $or: [{ isActive: false }, { isverified: false }, { isVerified: false }],
+    })
+      .populate("postedBy", "name email companyName")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: pendingJobs.length,
+      data: pendingJobs,
+    });
+  } catch (error) {
+    console.error("Get Pending Jobs Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 // ======================================
 // GET /api/jobs/:id
 // Get single job
@@ -51,7 +81,7 @@ const getAllJobs = async (req, res) => {
 const getJobById = async (req, res) => {
   try {
     const jobId = req.params.id;
-        const userId = req.user.id;
+    const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(jobId)) {
       return res.status(400).json({
@@ -71,23 +101,21 @@ const getJobById = async (req, res) => {
         message: "Job not found.",
       });
     }
-    const alreadyApplied =
-      await JobApplication.exists({
-        job: jobId,
-        applicant: userId,
-      });
-      console.log("alreadyApplied:", alreadyApplied);
+    const alreadyApplied = await JobApplication.exists({
+      job: jobId,
+      applicant: userId,
+    });
     
     const isApplied = alreadyApplied !== null;
-      console.log(job)
-res.status(200).json({
-  success: true,
-  message: "Job fetched successfully.",
-  data: {
-    ...job.toObject(),
-    isApplied,
-  },
-});
+
+    res.status(200).json({
+      success: true,
+      message: "Job fetched successfully.",
+      data: {
+        ...job.toObject(),
+        isApplied,
+      },
+    });
   } catch (error) {
     console.error("Get Job Error:", error);
 
@@ -161,8 +189,6 @@ const applyForJob = async (req, res) => {
   }
 };
 
-
-
 // ======================================
 // GET /api/jobs/applications
 // Get applied jobs
@@ -194,10 +220,17 @@ const getAppliedJobs = async (req, res) => {
   }
 };
 
-
+// ======================================
+// POST /api/jobs
+// Create a new Job
+// ======================================
 const createJob = async (req, res) => {
   try {
     const userId = req.user.id;
+
+    // Fetch user profile from DB to reliably check role and iscompany flags
+    const dbUser = await User.findById(userId).select("role iscompany");
+    const userRole = dbUser?.role || req.user.role;
 
     const {
       title,
@@ -215,10 +248,14 @@ const createJob = async (req, res) => {
       applicationDeadline,
       questions,
     } = req.body;
-    const validQuestions =
-  (questions || [])
-    .map((q) => q.trim())
-    .filter(Boolean);
+
+    const validQuestions = (questions || [])
+      .map((q) => q.trim())
+      .filter(Boolean);
+
+    // If Admin posts, activate immediately; if Company posts, pending verification
+    const isApproved = userRole === "admin";
+
     const job = await Job.create({
       title,
       company,
@@ -235,13 +272,20 @@ const createJob = async (req, res) => {
       applicationDeadline,
       questions: validQuestions,
       postedBy: userId,
-
+      isActive: isApproved,
+      isVerified: isApproved,
+      isverified: isApproved, // Sync both camelCase and lowercase field names
     });
-    
-    console.log(job);
+
+    if (isApproved) {
+      broadcastNewJobNotification(job.title, job.company);
+    }
+
     return res.status(201).json({
       success: true,
-      message: "Job created successfully.",
+      message: isApproved
+        ? "Job created and published successfully."
+        : "Job submitted successfully and is pending admin approval.",
       data: job,
     });
   } catch (error) {
@@ -254,6 +298,56 @@ const createJob = async (req, res) => {
   }
 };
 
+// ======================================
+// PUT /api/jobs/:id/verify
+// Admin verifies and approves job submission
+// ======================================
+const verifyJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Job ID",
+      });
+    }
+
+    const job = await Job.findById(jobId);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found.",
+      });
+    }
+
+    job.isActive = true;
+    job.isVerified = true;
+    job.isverified = true;
+    await job.save();
+
+    broadcastNewJobNotification(job.title, job.company);
+
+    return res.status(200).json({
+      success: true,
+      message: "Job verified and published successfully.",
+      data: job,
+    });
+  } catch (error) {
+    console.error("Verify Job Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// ======================================
+// PUT /api/jobs/:id
+// Update job
+// ======================================
 const updateJob = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -275,7 +369,7 @@ const updateJob = async (req, res) => {
       });
     }
 
-    if (job.postedBy.toString() !== userId) {
+    if (job.postedBy.toString() !== userId && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "You are not allowed to edit this job.",
@@ -301,16 +395,18 @@ const updateJob = async (req, res) => {
   }
 };
 
+// ======================================
+// GET /api/jobs/my-posted
+// Get jobs posted by logged-in user/company
+// ======================================
 const getPostedJobs = async (req, res) => {
-  console.log("Fetching posted jobs for user:", req.user.id);
   try {
     const userId = req.user.id;
 
     const jobs = await Job.find({
       postedBy: userId,
-    })
-      .sort({ createdAt: -1 });
-      console.log(jobs);
+    }).sort({ createdAt: -1 });
+
     return res.status(200).json({
       success: true,
       count: jobs.length,
@@ -325,6 +421,7 @@ const getPostedJobs = async (req, res) => {
     });
   }
 };
+
 const updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -344,8 +441,7 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    const application =
-      await JobApplication.findById(id);
+    const application = await JobApplication.findById(id);
 
     if (!application) {
       return res.status(404).json({
@@ -369,6 +465,7 @@ const updateApplicationStatus = async (req, res) => {
     });
   }
 };
+
 const getApplicants = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -378,24 +475,22 @@ const getApplicants = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const applications =
-      await JobApplication.find({
-        job: jobId,
-      })
-        .populate(
-          "applicant",
-          "name email mobileNumber location createdAt"
-        )
-        .skip(skip)
-        .limit(limit)
-        .sort({
-          createdAt: -1,
-        });
-
-    const total =
-      await JobApplication.countDocuments({
-        job: jobId,
+    const applications = await JobApplication.find({
+      job: jobId,
+    })
+      .populate(
+        "applicant",
+        "name email mobileNumber location createdAt"
+      )
+      .skip(skip)
+      .limit(limit)
+      .sort({
+        createdAt: -1,
       });
+
+    const total = await JobApplication.countDocuments({
+      job: jobId,
+    });
 
     res.json({
       success: true,
@@ -417,8 +512,10 @@ const getApplicants = async (req, res) => {
 
 module.exports = {
   getAllJobs,
+  getPendingJobs,
   getJobById,
   createJob,
+  verifyJob,
   updateJob,
   applyForJob,
   getAppliedJobs,
