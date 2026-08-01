@@ -100,7 +100,7 @@ const jobSchema = new mongoose.Schema(
     },
     isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     questions: [
   {
