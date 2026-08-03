@@ -33,7 +33,7 @@ const registerUser = async (req, res) => {
     });
     }
 
-    const mobileRegex = /^[6-9]\d{9}$/;
+    const mobileRegex = /^\+[1-9]\d{7,14}$/;
 
     if (!mobileRegex.test(trimmedMobileNumber)) {
     return res.status(400).json({
